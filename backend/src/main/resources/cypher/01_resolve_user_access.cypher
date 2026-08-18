@@ -4,21 +4,32 @@
 // Params: $userId (string)
 
 MATCH (u:User {id: $userId})
+
 CALL {
   WITH u
-  MATCH (u)-[:ASSIGNED_ROLE]->(baseRole:Role)
-  MATCH (baseRole)-[:INHERITS_FROM*0..5]->(effectiveRole:Role)
-  MATCH (effectiveRole)-[g:GRANTS]->(res:Resource)
+  MATCH (u)-[:ASSIGNED_ROLE]->(baseRole:Role)-[:INHERITS_FROM*0..5]->(effectiveRole:Role)-[g:GRANTS]->(res:Resource)
   RETURN res.id AS resourceId, res.name AS resourceName, res.type AS resourceType,
          g.permission AS permission, 'direct_role' AS pathType, baseRole.name AS viaRole
-  UNION
+}
+WITH u, collect({
+  resourceId: resourceId, resourceName: resourceName, resourceType: resourceType,
+  permission: permission, pathType: pathType, viaRole: viaRole
+}) AS directResults
+
+CALL {
   WITH u
-  MATCH (u)-[:MEMBER_OF]->(t:Team)-[:HAS_DEFAULT_ROLE]->(baseRole:Role)
-  MATCH (baseRole)-[:INHERITS_FROM*0..5]->(effectiveRole:Role)
-  MATCH (effectiveRole)-[g:GRANTS]->(res:Resource)
+  MATCH (u)-[:MEMBER_OF]->(:Team)-[:HAS_DEFAULT_ROLE]->(baseRole:Role)-[:INHERITS_FROM*0..5]->(effectiveRole:Role)-[g:GRANTS]->(res:Resource)
   RETURN res.id AS resourceId, res.name AS resourceName, res.type AS resourceType,
          g.permission AS permission, 'team_default_role' AS pathType, baseRole.name AS viaRole
 }
-RETURN resourceId, resourceName, resourceType, collect(DISTINCT permission) AS permissions,
-       collect(DISTINCT {pathType: pathType, viaRole: viaRole}) AS accessPaths
+WITH directResults, collect({
+  resourceId: resourceId, resourceName: resourceName, resourceType: resourceType,
+  permission: permission, pathType: pathType, viaRole: viaRole
+}) AS teamResults
+
+WITH directResults + teamResults AS allAccess
+UNWIND allAccess AS row
+RETURN row.resourceId AS resourceId, row.resourceName AS resourceName, row.resourceType AS resourceType,
+       collect(DISTINCT row.permission) AS permissions,
+       collect(DISTINCT {pathType: row.pathType, viaRole: row.viaRole}) AS accessPaths
 ORDER BY resourceName;
