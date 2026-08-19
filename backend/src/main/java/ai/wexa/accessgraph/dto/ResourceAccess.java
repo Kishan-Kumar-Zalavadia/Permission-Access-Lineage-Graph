@@ -15,6 +15,6 @@ public record ResourceAccess(
         List<String> permissions,
         List<AccessPath> accessPaths
 ) {
-    public record AccessPath(String pathType, String viaRole) {
+    public record AccessPath(String pathType, String viaRole, String viaTeam) {
     }
 }

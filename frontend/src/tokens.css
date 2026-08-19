@@ -1,0 +1,77 @@
+:root {
+  /* Color — "clearance dossier / technical schematic" */
+  --bg-void: #0b1220;
+  --bg-panel: #141d33;
+  --bg-panel-raised: #1a2540;
+  --line-grid: #253357;
+  --line-grid-soft: #1c2847;
+  --ink-primary: #e7ecf7;
+  --ink-muted: #7c89ac;
+  --ink-faint: #4d5a80;
+  --signal-amber: #e8a33d;
+  --signal-amber-dim: #4a3a1f;
+  --signal-rose: #e8617a;
+  --signal-rose-dim: #4a2530;
+
+  /* Type */
+  --font-display: 'IBM Plex Sans Condensed', sans-serif;
+  --font-body: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+
+  /* Spacing scale */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+
+  --shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-void);
+  background-image:
+    linear-gradient(var(--line-grid-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-grid-soft) 1px, transparent 1px);
+  background-size: 32px 32px;
+  color: var(--ink-primary);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* Visible keyboard focus everywhere, per accessibility floor */
+:focus-visible {
+  outline: 2px solid var(--signal-amber);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

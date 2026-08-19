@@ -2,6 +2,8 @@ package ai.wexa.accessgraph.controller;
 
 import ai.wexa.accessgraph.dto.ResourceAccess;
 import ai.wexa.accessgraph.dto.RevokeSimulationResult;
+import ai.wexa.accessgraph.dto.RoleSummary;
+import ai.wexa.accessgraph.dto.UserSummary;
 import ai.wexa.accessgraph.service.AccessGraphService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,6 +19,24 @@ public class AccessGraphController {
 
     public AccessGraphController(AccessGraphService service) {
         this.service = service;
+    }
+
+    /**
+     * GET /api/users
+     * All users, for the person-selector in the UI.
+     */
+    @GetMapping("/api/users")
+    public List<UserSummary> getUsers() {
+        return service.listUsers();
+    }
+
+    /**
+     * GET /api/users/{userId}/roles
+     * A user's directly-assigned roles, to populate the revoke-simulation selector.
+     */
+    @GetMapping("/api/users/{userId}/roles")
+    public List<RoleSummary> getUserRoles(@PathVariable String userId) {
+        return service.getDirectRoles(userId);
     }
 
     /**

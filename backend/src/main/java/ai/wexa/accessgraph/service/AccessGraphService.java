@@ -3,6 +3,8 @@ package ai.wexa.accessgraph.service;
 import ai.wexa.accessgraph.dto.ResourceAccess;
 import ai.wexa.accessgraph.dto.RevokeSimEntry;
 import ai.wexa.accessgraph.dto.RevokeSimulationResult;
+import ai.wexa.accessgraph.dto.RoleSummary;
+import ai.wexa.accessgraph.dto.UserSummary;
 import org.neo4j.driver.Driver;
 import org.neo4j.driver.Record;
 import org.neo4j.driver.Session;
@@ -19,11 +21,42 @@ public class AccessGraphService {
     private final Driver driver;
     private final String resolveAccessQuery;
     private final String simulateRevokeQuery;
+    private final String listUsersQuery;
+    private final String userDirectRolesQuery;
 
     public AccessGraphService(Driver driver, CypherQueryLoader queryLoader) {
         this.driver = driver;
         this.resolveAccessQuery = queryLoader.load("01_resolve_user_access.cypher");
         this.simulateRevokeQuery = queryLoader.load("02_simulate_revoke.cypher");
+        this.listUsersQuery = queryLoader.load("03_list_users.cypher");
+        this.userDirectRolesQuery = queryLoader.load("04_user_direct_roles.cypher");
+    }
+
+    /** All users, for the person-selector in the UI. */
+    public List<UserSummary> listUsers() {
+        try (Session session = driver.session()) {
+            return session.run(listUsersQuery).list(record -> new UserSummary(
+                    record.get("id").asString(),
+                    record.get("name").asString(),
+                    record.get("email").asString()
+            ));
+        } catch (ServiceUnavailableException e) {
+            throw new GraphUnavailableException("CognoDB is unreachable", e);
+        }
+    }
+
+    /** A user's directly-assigned roles, for the "simulate revoke" selector. */
+    public List<RoleSummary> getDirectRoles(String userId) {
+        try (Session session = driver.session()) {
+            return session.run(userDirectRolesQuery, Map.of("userId", userId)).list(record -> new RoleSummary(
+                    record.get("id").asString(),
+                    record.get("name").asString(),
+                    record.get("level").asInt(),
+                    record.get("assignedAt").asString()
+            ));
+        } catch (ServiceUnavailableException e) {
+            throw new GraphUnavailableException("CognoDB is unreachable", e);
+        }
     }
 
     /**
@@ -76,7 +109,8 @@ public class AccessGraphService {
     private ResourceAccess.AccessPath toAccessPath(org.neo4j.driver.Value value) {
         return new ResourceAccess.AccessPath(
                 value.get("pathType").asString(),
-                value.get("viaRole").asString()
+                value.get("viaRole").asString(),
+                value.get("viaTeam").isNull() ? null : value.get("viaTeam").asString()
         );
     }
 
