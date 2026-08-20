@@ -6,17 +6,17 @@
   --line-grid: #253357;
   --line-grid-soft: #1c2847;
   --ink-primary: #e7ecf7;
-  --ink-muted: #7c89ac;
-  --ink-faint: #4d5a80;
+  --ink-muted: #a0aac5;
+  --ink-faint: #767b8b;
   --signal-amber: #e8a33d;
   --signal-amber-dim: #4a3a1f;
   --signal-rose: #e8617a;
   --signal-rose-dim: #4a2530;
 
   /* Type */
-  --font-display: 'IBM Plex Sans Condensed', sans-serif;
-  --font-body: 'IBM Plex Sans', sans-serif;
-  --font-mono: 'IBM Plex Mono', monospace;
+  --font-display: "IBM Plex Sans Condensed", sans-serif;
+  --font-body: "IBM Plex Sans", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
 
   /* Spacing scale */
   --space-1: 4px;
@@ -31,7 +31,8 @@
   --radius-sm: 3px;
   --radius-md: 6px;
 
-  --shadow-panel: 0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-panel:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset, 0 8px 24px rgba(0, 0, 0, 0.35);
 }
 
 * {
