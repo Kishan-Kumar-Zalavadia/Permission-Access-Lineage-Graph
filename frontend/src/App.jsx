@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { api, ApiError } from './api';
 import Roster from './components/Roster';
 import Dossier from './components/Dossier';
@@ -12,11 +12,11 @@ export default function App() {
 
   const [selectedUserId, setSelectedUserId] = useState(null);
   const [accessData, setAccessData] = useState([]);
-  const [directRoles, setDirectRoles] = useState([]);
+  const [accessSources, setAccessSources] = useState([]);
   const [accessLoading, setAccessLoading] = useState(false);
   const [accessError, setAccessError] = useState(null);
 
-  const [selectedRoleId, setSelectedRoleId] = useState(null);
+  const [selectedSourceIds, setSelectedSourceIds] = useState([]);
   const [simulation, setSimulation] = useState(null);
   const [simulating, setSimulating] = useState(false);
   const [simError, setSimError] = useState(null);
@@ -31,31 +31,37 @@ export default function App() {
 
   const selectUser = useCallback((userId) => {
     setSelectedUserId(userId);
-    setSelectedRoleId(null);
+    setSelectedSourceIds([]);
     setSimulation(null);
     setSimError(null);
     setAccessLoading(true);
     setAccessError(null);
 
-    Promise.all([api.getUserAccess(userId), api.getUserDirectRoles(userId)])
-      .then(([access, roles]) => {
+    Promise.all([api.getUserAccess(userId), api.getAccessSources(userId)])
+      .then(([access, sources]) => {
         setAccessData(access);
-        setDirectRoles(roles);
+        setAccessSources(sources);
       })
       .catch((err) => setAccessError(err instanceof ApiError ? err.message : 'Something went wrong loading this person\u2019s access.'))
       .finally(() => setAccessLoading(false));
   }, []);
 
+  const toggleSource = useCallback((sourceId) => {
+    setSelectedSourceIds((prev) =>
+      prev.includes(sourceId) ? prev.filter((id) => id !== sourceId) : [...prev, sourceId]
+    );
+  }, []);
+
   const runSimulation = useCallback(() => {
-    if (!selectedUserId || !selectedRoleId) return;
+    if (!selectedUserId || selectedSourceIds.length === 0) return;
     setSimulating(true);
     setSimError(null);
     api
-      .simulateRevoke(selectedUserId, selectedRoleId)
+      .simulateRevoke(selectedUserId, selectedSourceIds)
       .then((result) => setSimulation(result))
       .catch((err) => setSimError(err instanceof ApiError ? err.message : 'Could not run the simulation.'))
       .finally(() => setSimulating(false));
-  }, [selectedUserId, selectedRoleId]);
+  }, [selectedUserId, selectedSourceIds]);
 
   const resetSimulation = useCallback(() => {
     setSimulation(null);
@@ -63,7 +69,20 @@ export default function App() {
   }, []);
 
   const selectedUser = users.find((u) => u.id === selectedUserId);
-  const revokedRole = directRoles.find((r) => r.id === selectedRoleId);
+
+  // Map selected sourceIds -> the GraphSchematic's role-node key format
+  // (`${pathType}:${roleName}:${teamName||''}`), so the diagram can
+  // highlight every selected role, not just one.
+  const revokedRoleKeys = useMemo(() => {
+    const keys = new Set();
+    selectedSourceIds.forEach((sourceId) => {
+      const source = accessSources.find((s) => s.sourceId === sourceId);
+      if (source) {
+        keys.add(`${source.pathType}:${source.roleName}:${source.teamName || ''}`);
+      }
+    });
+    return keys;
+  }, [selectedSourceIds, accessSources]);
 
   return (
     <div className="app-shell">
@@ -71,7 +90,8 @@ export default function App() {
         <div className="app-header-eyebrow">Access Lineage</div>
         <h1 className="app-header-title">Clearance Dossier</h1>
         <p className="app-header-sub">
-          Trace who can reach what, through which path — and see exactly what a role revocation actually changes.
+          Trace who can reach what, through which path — and see exactly what revoking any
+          combination of roles actually changes.
         </p>
       </header>
 
@@ -106,13 +126,19 @@ export default function App() {
             <div className="banner banner--error">{accessError}</div>
           )}
 
-          {selectedUserId && !accessLoading && !accessError && (
+          {selectedUserId && !accessLoading && !accessError && accessData.length === 0 && (
+            <div className="empty-note empty-note--center">
+              {selectedUser?.name} has no resolvable access in the graph — no team membership
+              and no directly-assigned role.
+            </div>
+          )}
+
+          {selectedUserId && !accessLoading && !accessError && accessData.length > 0 && (
             <>
               <GraphSchematic
                 userName={selectedUser?.name || ''}
                 accessData={accessData}
-                revokedRoleId={selectedRoleId}
-                revokedRoleName={revokedRole?.name}
+                revokedRoleKeys={revokedRoleKeys}
                 simulation={simulation}
               />
               <div className="legend">
@@ -138,9 +164,9 @@ export default function App() {
               </div>
 
               <RevokeSimulator
-                directRoles={directRoles}
-                selectedRoleId={selectedRoleId}
-                onSelectRole={setSelectedRoleId}
+                accessSources={accessSources}
+                selectedSourceIds={selectedSourceIds}
+                onToggleSource={toggleSource}
                 onSimulate={runSimulation}
                 onReset={resetSimulation}
                 simulating={simulating}

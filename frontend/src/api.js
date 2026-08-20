@@ -33,8 +33,11 @@ export const api = {
   listUsers: () => request('/api/users'),
   getUserAccess: (userId) => request(`/api/users/${encodeURIComponent(userId)}/access`),
   getUserDirectRoles: (userId) => request(`/api/users/${encodeURIComponent(userId)}/roles`),
-  simulateRevoke: (userId, roleId) =>
-    request(`/api/users/${encodeURIComponent(userId)}/simulate-revoke?roleId=${encodeURIComponent(roleId)}`),
+  getAccessSources: (userId) => request(`/api/users/${encodeURIComponent(userId)}/access-sources`),
+  simulateRevoke: (userId, sourceIds) => {
+    const params = sourceIds.map((id) => `source=${encodeURIComponent(id)}`).join('&');
+    return request(`/api/users/${encodeURIComponent(userId)}/simulate-revoke?${params}`);
+  },
 };
 
 export { ApiError };

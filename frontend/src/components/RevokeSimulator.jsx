@@ -1,51 +1,80 @@
+function groupSources(sources) {
+  const direct = sources.filter((s) => s.pathType === 'direct_role');
+  const team = sources.filter((s) => s.pathType === 'team_default_role');
+  return { direct, team };
+}
+
 export default function RevokeSimulator({
-  directRoles,
-  selectedRoleId,
-  onSelectRole,
+  accessSources,
+  selectedSourceIds,
+  onToggleSource,
   onSimulate,
   onReset,
   simulating,
   simulation,
   error,
 }) {
-  if (directRoles.length === 0) {
+  if (accessSources.length === 0) {
     return (
       <div className="panel simulator">
         <div className="panel-eyebrow">Simulate revoke</div>
-        <div className="empty-note">This person has no directly-assigned roles to revoke.</div>
+        <div className="empty-note">This person has no access sources to revoke.</div>
       </div>
     );
   }
+
+  const { direct, team } = groupSources(accessSources);
+  const selectedCount = selectedSourceIds.length;
 
   return (
     <div className="panel simulator">
       <div className="panel-eyebrow">Simulate revoke</div>
       <p className="simulator-copy">
-        Pick a directly-assigned role and see exactly what this person loses —
-        accounting for anything they'd keep anyway through team-inherited access.
+        Select any combination of direct and team-inherited roles and see exactly what this
+        person loses — accounting for anything they'd keep anyway through the sources you
+        didn't select.
       </p>
 
-      <label className="field-label" htmlFor="role-select">Role to revoke</label>
-      <select
-        id="role-select"
-        className="select"
-        value={selectedRoleId || ''}
-        onChange={(e) => onSelectRole(e.target.value)}
-      >
-        <option value="" disabled>Choose a role…</option>
-        {directRoles.map((role) => (
-          <option key={role.id} value={role.id}>{role.name}</option>
-        ))}
-      </select>
+      {direct.length > 0 && (
+        <fieldset className="source-group">
+          <legend className="field-label">Direct roles</legend>
+          {direct.map((source) => (
+            <label key={source.sourceId} className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={selectedSourceIds.includes(source.sourceId)}
+                onChange={() => onToggleSource(source.sourceId)}
+              />
+              <span>{source.roleName}</span>
+            </label>
+          ))}
+        </fieldset>
+      )}
+
+      {team.length > 0 && (
+        <fieldset className="source-group">
+          <legend className="field-label">Team-inherited roles (indirect)</legend>
+          {team.map((source) => (
+            <label key={source.sourceId} className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={selectedSourceIds.includes(source.sourceId)}
+                onChange={() => onToggleSource(source.sourceId)}
+              />
+              <span>{source.roleName} <span className="checkbox-row-sub">via {source.teamName}</span></span>
+            </label>
+          ))}
+        </fieldset>
+      )}
 
       <div className="simulator-actions">
         <button
           type="button"
           className="btn btn--primary"
           onClick={onSimulate}
-          disabled={!selectedRoleId || simulating}
+          disabled={selectedCount === 0 || simulating}
         >
-          {simulating ? 'Simulating…' : 'Simulate revoke'}
+          {simulating ? 'Simulating…' : `Simulate revoke (${selectedCount})`}
         </button>
         {simulation && (
           <button type="button" className="btn btn--ghost" onClick={onReset}>

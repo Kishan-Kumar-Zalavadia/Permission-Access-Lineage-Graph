@@ -46,7 +46,7 @@ function buildGraph(accessData) {
   return { roleNodes: [...roleMap.values()], resourceNodes, edges };
 }
 
-export default function GraphSchematic({ userName, accessData, revokedRoleId, revokedRoleName, simulation }) {
+export default function GraphSchematic({ userName, accessData, revokedRoleKeys, simulation }) {
   const graph = useMemo(() => buildGraph(accessData), [accessData]);
 
   const rolePositions = useMemo(() => {
@@ -67,7 +67,7 @@ export default function GraphSchematic({ userName, accessData, revokedRoleId, re
 
   const lostIds = new Set((simulation?.actuallyLost || []).map((r) => r.id));
   const retainedIds = new Set((simulation?.retainedAnyway || []).map((r) => r.id));
-  const revokedRoleKey = revokedRoleName ? `direct_role:${revokedRoleName}:` : null;
+  const revokedKeys = revokedRoleKeys || new Set();
 
   return (
     <svg
@@ -83,7 +83,7 @@ export default function GraphSchematic({ userName, accessData, revokedRoleId, re
       {/* Center -> Role edges */}
       {graph.roleNodes.map((role) => {
         const pos = rolePositions.get(role.key);
-        const isRevoked = role.key === revokedRoleKey;
+        const isRevoked = revokedKeys.has(role.key);
         return (
           <line
             key={`center-${role.key}`}
@@ -100,7 +100,7 @@ export default function GraphSchematic({ userName, accessData, revokedRoleId, re
       {graph.edges.map((edge) => {
         const from = rolePositions.get(edge.roleKey);
         const to = resourcePositions.get(edge.resourceId);
-        const isFromRevokedRole = edge.roleKey === revokedRoleKey;
+        const isFromRevokedRole = revokedKeys.has(edge.roleKey);
         const isLost = isFromRevokedRole && lostIds.has(edge.resourceId);
         const isRetained = simulation && retainedIds.has(edge.resourceId);
         let cls = `edge edge--${edge.pathType}`;
@@ -147,7 +147,7 @@ export default function GraphSchematic({ userName, accessData, revokedRoleId, re
       {/* Role nodes (middle ring) */}
       {graph.roleNodes.map((role) => {
         const pos = rolePositions.get(role.key);
-        const isRevoked = role.key === revokedRoleKey;
+        const isRevoked = revokedKeys.has(role.key);
         return (
           <g
             key={role.key}

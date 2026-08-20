@@ -3,13 +3,13 @@ package ai.wexa.accessgraph.dto;
 import java.util.List;
 
 /**
- * Result of simulating a role revocation for a user: the set difference
- * between "everything reachable via the role being revoked" and "everything
- * still reachable via other paths (e.g. team-inherited default role)".
+ * Result of simulating a revocation across one or more access sources: the
+ * set difference between "everything reachable via any selected source" and
+ * "everything still reachable via sources NOT selected for revocation".
  */
 public record RevokeSimulationResult(
         String userId,
-        String roleIdToRevoke,
+        List<String> revokedSources,
         List<RevokeSimEntry> actuallyLost,
         List<RevokeSimEntry> retainedAnyway
 ) {

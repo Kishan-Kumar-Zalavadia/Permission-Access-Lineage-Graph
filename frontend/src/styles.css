@@ -105,6 +105,8 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+  max-height: 640px;
+  overflow-y: auto;
 }
 
 .roster-item {
@@ -288,6 +290,35 @@
   padding: var(--space-2) var(--space-3);
   font-family: var(--font-mono);
   font-size: 13px;
+}
+
+.source-group {
+  border: none;
+  padding: 0;
+  margin: 0 0 var(--space-4);
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  font-size: 13px;
+  color: var(--ink-primary);
+  cursor: pointer;
+}
+
+.checkbox-row input[type='checkbox'] {
+  accent-color: var(--signal-amber);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+.checkbox-row-sub {
+  color: var(--ink-muted);
+  font-size: 11px;
+  font-family: var(--font-mono);
 }
 
 .simulator-actions {
