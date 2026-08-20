@@ -9,7 +9,8 @@ styled as a technical "clearance dossier."
 > query walkthrough it asks for.
 
 **Live demo:** `https://permission-access-lineage-graph.vercel.app`
-**Screen recording:** `<link here>`
+
+**Screen recording:** `https://www.loom.com/share/a04660f74f67414fb4655450582fc6e1`
 
 ---
 
